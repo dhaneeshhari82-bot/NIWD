@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Saji: The Forest Within</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#07110d;color:#eee;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+#app{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;background:
+radial-gradient(circle at 50% 10%,#173d2a 0,#0b1d14 35%,#050b08 75%)}
+.game{width:min(1050px,100%);background:#0c1712;border:1px solid #294b38;border-radius:20px;overflow:hidden;box-shadow:0 25px 80px #0009}
+header{padding:18px 22px;border-bottom:1px solid #294b38;display:flex;justify-content:space-between;gap:15px;align-items:center}
+h1,h2,p{margin-top:0}.brand h1{font-size:25px;margin:0}.brand small{color:#9ab8a6}
+.stats{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.stat{background:#13231a;border:1px solid #2b503a;border-radius:999px;padding:7px 11px;font-size:13px}
+main{display:grid;grid-template-columns:1.45fr .75fr;min-height:600px}
+.scene{position:relative;padding:28px;min-height:600px;background:
+linear-gradient(180deg,#10291b88,#07100bcc),
+radial-gradient(circle at 50% 35%,#285c3988,transparent 45%)}
+.scene:before{content:"";position:absolute;inset:0;opacity:.22;background-image:
+linear-gradient(120deg,transparent 47%,#9cc8a020 48%,transparent 49%),
+linear-gradient(60deg,transparent 47%,#9cc8a015 48%,transparent 49%);background-size:90px 90px;pointer-events:none}
+.scene>*{position:relative}
+#chapter{color:#8fd3a5;text-transform:uppercase;letter-spacing:2px;font-size:12px}
+#title{font-size:clamp(30px,5vw,52px);margin:7px 0 12px}
+#story{font-size:18px;line-height:1.7;color:#d7e5dc;max-width:720px}
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:24px}
+button{font:inherit;color:#f4fff7;background:#14281d;border:1px solid #3a674a;border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;min-height:55px}
+button:hover{background:#1b3526;border-color:#69a77b}button:focus-visible{outline:3px solid #9bd9ad;outline-offset:2px}
+button.primary{background:#2a6240;border-color:#72bd89;text-align:center}
+button.danger{background:#42201d;border-color:#89514b}
+aside{border-left:1px solid #294b38;padding:20px;background:#09130e}
+.panel{background:#0e1e15;border:1px solid #294b38;border-radius:14px;padding:15px;margin-bottom:13px}
+.panel h3{margin:0 0 10px;font-size:14px;color:#a8cdb4;text-transform:uppercase;letter-spacing:1px}
+.bar{height:9px;background:#17271d;border-radius:20px;overflow:hidden;margin:6px 0 12px}.fill{height:100%;background:#68b77c;width:100%;transition:.3s}
+.enemy{color:#ffb2a8}.gold{color:#f2d37c}.good{color:#9ee1ae}
+.log{font-size:13px;line-height:1.5;color:#9eb5a6;max-height:145px;overflow:auto}
+#overlay{position:fixed;inset:0;background:#020604cc;display:none;align-items:center;justify-content:center;padding:20px;z-index:5}
+.modal{width:min(620px,100%);background:#0d1a13;border:1px solid #41694e;border-radius:18px;padding:28px;text-align:center}
+.modal h2{font-size:38px;margin-bottom:8px}
+@media(max-width:760px){main{grid-template-columns:1fr}.scene{min-height:auto}.choice-grid{grid-template-columns:1fr}aside{border-left:0;border-top:1px solid #294b38}header{align-items:flex-start;flex-direction:column}.stats{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="game">
+<header>
+  <div class="brand"><h1>SAJI: THE FOREST WITHIN</h1><small>An RPG about strength, purpose, danger, and love.</small></div>
+  <div class="stats"><span class="stat">⚔ Lv <b id="level">1</b></span><span class="stat">⭐ XP <b id="xp">0</b></span><span class="stat">🪙 <b id="gold">20</b></span></div>
+</header>
+<main>
+<section class="scene">
+  <div id="chapter">Prologue</div>
+  <h2 id="title">The Man Who Had Everything Except an Answer</h2>
+  <p id="story"></p>
+  <div id="choices" class="choice-grid"></div>
+</section>
+<aside>
+  <div class="panel"><h3>Saji</h3>
+    <div>❤️ HP <b id="hpText">100/100</b></div><div class="bar"><div id="hpBar" class="fill"></div></div>
+    <div>💪 Strength <b id="str">12</b></div>
+    <div>🧠 Wisdom <b id="wis">5</b></div>
+    <div>❤️ Bond with Mira <b id="bond">0</b></div>
+  </div>
+  <div class="panel"><h3>Inventory</h3><div id="inventory">Iron Axe · Forest Herbs · Old Pendant</div></div>
+  <div class="panel"><h3>Journey Log</h3><div id="log" class="log"></div></div>
+  <button id="saveBtn" type="button">Save Progress</button>
+  <button id="resetBtn" type="button" style="margin-top:8px">Restart Journey</button>
+</aside>
+</main>
+</div>
+</div>
+<div id="overlay"><div class="modal">
+  <div id="endingIcon" style="font-size:48px">🌲</div>
+  <h2 id="endingTitle">The End</h2>
+  <p id="endingText" style="line-height:1.7;color:#c9dacf"></p>
+  <button id="again" class="primary" type="button">Begin Again</button>
+</div></div>
+
+<script>
+(() => {
+const $=id=>document.getElementById(id);
+const initial={chapter:0,hp:100,maxHp:100,str:12,wis:5,bond:0,xp:0,level:1,gold:20,inventory:["Iron Axe","Forest Herbs","Old Pendant"],flags:{goblin:false,wolf:false,witch:false,truth:false},log:[]};
+let s=JSON.parse(JSON.stringify(initial));
+
+const chapters=[
+{c:"PROLOGUE · THE FOREST EDGE",t:"The Man Who Had Everything Except an Answer",
+text:`Saji was a muscular man who had spent years becoming strong enough to carry any burden—except the question inside him. One dawn, he entered the forbidden forest with an old pendant in his pocket. His only clue was a sentence from his late father: “When you find the heart of the forest, you will understand your own.”`,
+choices:[
+["Enter the forest without fear","enter"],
+["Study the strange tracks first","study"],
+["Touch the old pendant and listen","pendant"]]},
+{c:"CHAPTER I · GOBLIN WOODS",t:"The Green-Eyed Ambush",
+text:`A branch snaps. Goblins pour from the ferns, surrounding Saji with crude blades and hungry eyes. Their leader points toward the pendant. “Give it to us!” he snarls. Saji realizes they are frightened of something deeper in the forest.`,
+choices:[
+["Fight the goblins head-on","fightGob"],
+["Intimidate their leader","intimidate"],
+["Ask what they fear","askGob"]]},
+{c:"CHAPTER II · THE BEAST",t:"Teeth Beneath the Moon",
+text:`Beyond the goblin camp, Saji finds a wounded silver wolf trapped beneath a fallen tree. Before he can free it, a huge forest monster emerges from the darkness. It has antlers like twisted branches and eyes like burning amber.`,
+choices:[
+["Free the wolf, then fight","saveWolf"],
+["Challenge the monster alone","fightBeast"],
+["Search for a clever way around it","cleverBeast"]]},
+{c:"CHAPTER III · THE WITCH",t:"The Woman in the Green Fire",
+text:`Rain falls without a cloud. Green flames appear between ancient trees, revealing a young witch named Mira. She could have attacked Saji, but instead she heals his wounds. “You came looking for the meaning of your life,” she says. “But you haven't asked yourself what you are willing to live for.”`,
+choices:[
+["Trust Mira and tell her your fear","trustMira"],
+["Keep your distance and question her","questionMira"],
+["Thank her and continue alone","leaveMira"]]},
+{c:"CHAPTER IV · HEART OF THE FOREST",t:"The Truth Beneath the Roots",
+text:`Mira catches up with Saji at the oldest tree in the forest. The pendant glows. Roots pull away from a stone door. Inside is not treasure, but a mural showing a warrior protecting a small village. The warrior looks exactly like Saji.`,
+choices:[
+["Ask Mira what the mural means","muralMira"],
+["Open the stone door yourself","openDoor"],
+["Admit that you are afraid of becoming nothing","admit"]]},
+{c:"CHAPTER V · THE CHOICE",t:"Strength Is Not the Answer",
+text:`The forest spirit appears. It tells Saji that the mural is not a prophecy. It is a choice. He can become a solitary warrior, a guardian of others, or leave the forest with Mira and build a different life.`,
+choices:[
+["Become the forest's guardian","guardian"],
+["Leave the forest with Mira","miraEnd"],
+["Walk away alone and seek your own path","aloneEnd"]]}
+];
+
+function addLog(x){s.log.unshift(x);s.log=s.log.slice(0,8)}
+function gain(xp){s.xp+=xp;if(s.xp>=s.level*50){s.xp-=s.level*50;s.level++;s.maxHp+=12;s.hp=s.maxHp;s.str+=3;addLog("Level up! Saji grew stronger.")}}
+function damage(n){s.hp=Math.max(0,s.hp-n)}
+function render(){
+$("chapter").textContent=chapters[s.chapter].c;$("title").textContent=chapters[s.chapter].t;$("story").textContent=chapters[s.chapter].text;
+$("level").textContent=s.level;$("xp").textContent=s.xp;$("gold").textContent=s.gold;$("hpText").textContent=s.hp+"/"+s.maxHp;
+$("hpBar").style.width=(100*s.hp/s.maxHp)+"%";$("str").textContent=s.str;$("wis").textContent=s.wis;$("bond").textContent=s.bond;
+$("inventory").textContent=s.inventory.join(" · ");$("log").innerHTML=s.log.length?s.log.map(x=>"<div>"+x+"</div>").join(""):"Your journey has just begun.";
+const box=$("choices");box.innerHTML="";
+chapters[s.chapter].choices.forEach(([label,id])=>{let b=document.createElement("button");b.type="button";b.textContent=label;b.onclick=()=>choose(id);box.appendChild(b)});
+}
+function next(){if(s.hp<=0){end(false);return} if(s.chapter<chapters.length-1){s.chapter++;render()}else end(true)}
+function choose(id){
+switch(id){
+case"enter":s.wis++;addLog("Saji entered the forest without hesitation.");break;
+case"study":s.wis+=2;gain(10);addLog("The tracks reveal that something is hunting the goblins.");break;
+case"pendant":s.str++;s.wis++;addLog("The pendant whispers: “Do not confuse strength with purpose.”");break;
+case"fightGob":damage(18);s.str+=2;gain(30);s.gold+=8;s.flags.goblin=true;addLog("Saji defeated the goblin raiders.");break;
+case"intimidate":if(s.str>=13){gain(25);s.flags.goblin=true;addLog("The goblin leader surrendered. Fear can end a fight before it begins.");}else{damage(12);addLog("The goblins did not believe Saji's threat.");}break;
+case"askGob":s.wis+=2;gain(20);s.flags.goblin=true;addLog("The goblins warned Saji about the antlered beast.");break;
+case"saveWolf":damage(14);s.wis++;s.inventory.push("Silver Wolf's Fang");gain(35);s.flags.wolf=true;addLog("Saji freed the wolf. It followed him into the darkness.");break;
+case"fightBeast":damage(30);s.str+=3;gain(45);s.gold+=12;s.flags.wolf=true;addLog("Saji defeated the antlered monster through sheer force.");break;
+case"cleverBeast":if(s.wis>=7){gain(35);s.flags.wolf=true;addLog("Saji used the terrain to escape the monster.");}else{damage(22);addLog("The plan was imperfect, and the beast wounded Saji.");}break;
+case"trustMira":s.bond+=3;s.wis+=2;s.hp=Math.min(s.maxHp,s.hp+25);s.flags.witch=true;gain(20);addLog("Mira healed Saji. A quiet trust began between them.");break;
+case"questionMira":s.bond+=1;s.wis+=2;s.flags.witch=true;addLog("Mira respected Saji's caution and answered his questions.");break;
+case"leaveMira":s.flags.witch=true;addLog("Saji walked away, but Mira's words stayed with him.");break;
+case"muralMira":s.bond+=2;s.wis+=3;s.flags.truth=true;addLog("Mira revealed that Saji's father once protected this forest.");break;
+case"openDoor":damage(8);s.flags.truth=true;gain(25);addLog("Saji forced the ancient door open and discovered his father's secret.");break;
+case"admit":s.wis+=4;s.bond+=2;s.flags.truth=true;addLog("Saji finally admitted that strength had always hidden his fear.");break;
+case"guardian":s.str+=5;s.wis+=2;s.flags.truth=true;end("guardian");return;
+case"miraEnd":s.bond+=2;end("mira");return;
+case"aloneEnd":end("alone");return;
+}
+next();
+}
+function end(kind){
+$("overlay").style.display="flex";
+let title,text,icon;
+if(kind===false){icon="💀";title="The Forest Won";text="Saji's strength was not enough this time. Yet the forest remembers his courage. His journey ends here—but another traveler may one day discover his story."}
+else if(kind==="guardian"){icon="🌳";title="Guardian of the Green";text="Saji chooses to protect the forest. He finally understands that his strength has meaning when it is used for something beyond himself. The forest accepts him, and the pendant becomes a symbol of his new purpose."}
+else if(kind==="mira"){icon="💚";title="A Life Chosen Together";text="Saji leaves the forest with Mira. He once entered searching for a grand answer, but discovers something quieter: purpose can be built through love, trust, and the people you choose to protect."}
+else if(kind==="alone"){icon="🌅";title="The Road Beyond";text="Saji walks beyond the forest alone—not because he is empty, but because he finally understands that his life does not need a predetermined meaning. He will create one."}
+$("endingIcon").textContent=icon;$("endingTitle").textContent=title;$("endingText").textContent=text;
+}
+$("saveBtn").onclick=()=>{try{localStorage.setItem("sajiRPG",JSON.stringify(s));addLog("Progress saved in this browser.");render()}catch(e){addLog("Save unavailable; the current journey remains active.")}};
+$("resetBtn").onclick=()=>{if(confirm("Restart Saji's journey?")){s=JSON.parse(JSON.stringify(initial));render()}};
+$("again").onclick=()=>{$("overlay").style.display="none";s=JSON.parse(JSON.stringify(initial));render()};
+try{let saved=localStorage.getItem("sajiRPG");if(saved){let q=JSON.parse(saved);if(q&&q.chapter>=0)s=q}}catch(e){}
+render();
+})();
+</script>
+</body>
+</html>
